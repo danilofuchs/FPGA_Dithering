@@ -1,52 +1,31 @@
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
+USE ieee.numeric_std.ALL;
 
-package VgaUtils is
-  constant COLOR_WHITE  : std_logic_vector := "111";
-  constant COLOR_YELLOW : std_logic_vector := "110";
-  constant COLOR_PURPLE : std_logic_vector := "101";
-  constant COLOR_RED    : std_logic_vector := "100";
-  constant COLOR_WATER  : std_logic_vector := "011";
-  constant COLOR_GREEN  : std_logic_vector := "010";
-  constant COLOR_BLUE   : std_logic_vector := "001";
-  constant COLOR_BLACK  : std_logic_vector := "000";
+PACKAGE VgaUtils IS
+  CONSTANT COLOR_WHITE : STD_LOGIC_VECTOR := "111";
+  CONSTANT COLOR_YELLOW : STD_LOGIC_VECTOR := "110";
+  CONSTANT COLOR_PURPLE : STD_LOGIC_VECTOR := "101";
+  CONSTANT COLOR_RED : STD_LOGIC_VECTOR := "100";
+  CONSTANT COLOR_WATER : STD_LOGIC_VECTOR := "011";
+  CONSTANT COLOR_GREEN : STD_LOGIC_VECTOR := "010";
+  CONSTANT COLOR_BLUE : STD_LOGIC_VECTOR := "001";
+  CONSTANT COLOR_BLACK : STD_LOGIC_VECTOR := "000";
 
-  -- Values for 640x480 resolution
-  constant HSYNC_END   : integer := 95;
-  constant HDATA_BEGIN : integer := 143;
-  constant HDATA_END   : integer := 783;
-  constant HLINE_END   : integer := 799;
+  -- Timing values for 640x480@60Hz resolution
+  -- http://tinyvga.com/vga-timing/640x480@60Hz
+  CONSTANT H_SYNC_PULSE : INTEGER := 96;
+  CONSTANT H_BACK_PORCH : INTEGER := 48;
+  CONSTANT H_PIXELS : INTEGER := 640;
+  CONSTANT H_FRONT_PORCH : INTEGER := 16;
+  CONSTANT H_SYNC_POLARITY : STD_LOGIC := '0';
 
-  constant VSYNC_END   : integer := 1;
-  constant VDATA_BEGIN : integer := 34;
-  constant VDATA_END   : integer := 514;
-  constant VLINE_END   : integer := 524;
+  CONSTANT V_SYNC_PULSE : INTEGER := 2;
+  CONSTANT V_BACK_PORCH : INTEGER := 33;
+  CONSTANT V_PIXELS : INTEGER := 480;
+  CONSTANT V_FRONT_PORCH : INTEGER := 10;
+  CONSTANT V_SYNC_POLARITY : STD_LOGIC := '0';
+END PACKAGE;
 
-  constant H_EIGHTH  : integer := 640 / 8;
-  constant H_HALF    : integer := 640 / 2;
-  constant H_QUARTER : integer := 640 / 4;
-
-  constant V_EIGHTH  : integer := 480 / 8;
-  constant V_HALF    : integer := 480 / 2;
-  constant V_QUARTER : integer := 480 / 4;
-
-  procedure Square (
-    signal hcur, vcur  : in integer;
-    signal hpos, vpos  : in integer;
-    constant size      : in integer;
-    signal should_draw : out boolean
-  );
-end package;
-
-package body VgaUtils is
-  procedure Square (
-    signal hcur, vcur  : in integer;
-    signal hpos, vpos  : in integer;
-    constant size      : in integer;
-    signal should_draw : out boolean
-  ) is
-  begin
-    should_draw <= hcur > hpos and hcur < (hpos + size) and vcur > vpos and vcur < (vpos + size);
-  end Square;
-end VgaUtils;
+PACKAGE BODY VgaUtils IS
+END VgaUtils;

@@ -5,104 +5,81 @@ USE work.VgaUtils.ALL;
 
 ENTITY FPGA_Dithering IS
     PORT (
-        clk : IN STD_LOGIC; -- Pin 23, 50MHz from the onboard oscilator.
+        clk : IN STD_LOGIC; -- Pin 23, 50MHz from the onboard oscillator.
         rgb : OUT STD_LOGIC_VECTOR (2 DOWNTO 0); -- Pins 106, 105 and 104
         hsync : OUT STD_LOGIC; -- Pin 101
-        vsync : OUT STD_LOGIC; -- Pin 103
-        up : IN STD_LOGIC;
-        down : IN STD_LOGIC;
-        left : IN STD_LOGIC;
-        right : IN STD_LOGIC
+        vsync : OUT STD_LOGIC -- Pin 103
     );
 END ENTITY FPGA_Dithering;
 
 ARCHITECTURE rtl OF FPGA_Dithering IS
-    CONSTANT SQUARE_SIZE : INTEGER := 30; -- In pixels
-    CONSTANT SQUARE_SPEED : INTEGER := 100_000;
+
+    CONSTANT COLOR_WHITE : STD_LOGIC_VECTOR := "111";
+    CONSTANT COLOR_YELLOW : STD_LOGIC_VECTOR := "110";
+    CONSTANT COLOR_PURPLE : STD_LOGIC_VECTOR := "101";
+    CONSTANT COLOR_RED : STD_LOGIC_VECTOR := "100";
+    CONSTANT COLOR_WATER : STD_LOGIC_VECTOR := "011";
+    CONSTANT COLOR_GREEN : STD_LOGIC_VECTOR := "010";
+    CONSTANT COLOR_BLUE : STD_LOGIC_VECTOR := "001";
+    CONSTANT COLOR_BLACK : STD_LOGIC_VECTOR := "000";
 
     -- VGA Clock - 25 MHz clock derived from the 50MHz built-in clock
     SIGNAL vga_clk : STD_LOGIC;
 
-    SIGNAL rgb_input, rgb_output : STD_LOGIC_VECTOR(2 DOWNTO 0);
     SIGNAL vga_hsync, vga_vsync : STD_LOGIC;
-    SIGNAL hpos, vpos : INTEGER;
-
-    SIGNAL square_x : INTEGER RANGE HDATA_BEGIN TO HDATA_END := HDATA_BEGIN + H_HALF - SQUARE_SIZE/2;
-    SIGNAL square_y : INTEGER RANGE VDATA_BEGIN TO VDATA_END := VDATA_BEGIN + V_HALF - SQUARE_SIZE/2;
-    SIGNAL square_speed_count : INTEGER RANGE 0 TO SQUARE_SPEED := 0;
-
-    SIGNAL up_debounced : STD_LOGIC;
-    SIGNAL down_debounced : STD_LOGIC;
-    SIGNAL left_debounced : STD_LOGIC;
-    SIGNAL right_debounced : STD_LOGIC;
-
-    SIGNAL move_square_en : STD_LOGIC;
-    SIGNAL should_move_square : BOOLEAN;
-
-    SIGNAL should_draw_square : BOOLEAN;
+    SIGNAL display_enable : STD_LOGIC;
+    SIGNAL rgb_output : STD_LOGIC_VECTOR (2 DOWNTO 0);
+    SIGNAL column, row : INTEGER;
 
     COMPONENT VgaController IS
+        GENERIC (
+            h_pulse : INTEGER := 208; --horizontal sync pulse width in pixels
+            h_bp : INTEGER := 336; --horizontal back porch width in pixels
+            h_pixels : INTEGER := 1920; --horizontal display width in pixels
+            h_fp : INTEGER := 128; --horizontal front porch width in pixels
+            h_pol : STD_LOGIC := '0'; --horizontal sync pulse polarity (1 = positive, 0 = negative)
+            v_pulse : INTEGER := 3; --vertical sync pulse width in rows
+            v_bp : INTEGER := 38; --vertical back porch width in rows
+            v_pixels : INTEGER := 1200; --vertical display width in rows
+            v_fp : INTEGER := 1; --vertical front porch width in rows
+            v_pol : STD_LOGIC := '1'); --vertical sync pulse polarity (1 = positive, 0 = negative)
         PORT (
-            clk : IN STD_LOGIC;
-            rgb_in : IN STD_LOGIC_VECTOR (2 DOWNTO 0);
-            rgb_out : OUT STD_LOGIC_VECTOR (2 DOWNTO 0);
-            hsync : OUT STD_LOGIC;
-            vsync : OUT STD_LOGIC;
-            hpos : OUT INTEGER;
-            vpos : OUT INTEGER
-        );
-    END COMPONENT;
-
-    COMPONENT Debounce IS
-        PORT (
-            i_Clk : IN STD_LOGIC;
-            i_Switch : IN STD_LOGIC;
-            o_Switch : OUT STD_LOGIC
-        );
+            pixel_clk : IN STD_LOGIC; --pixel clock at frequency of VGA mode being used
+            reset_n : IN STD_LOGIC; --active low asynchronous reset
+            h_sync : OUT STD_LOGIC; --horizontal sync pulse
+            v_sync : OUT STD_LOGIC; --vertical sync pulse
+            disp_ena : OUT STD_LOGIC; --display enable ('1' = display time, '0' = blanking time)
+            column : OUT INTEGER; --horizontal pixel coordinate
+            row : OUT INTEGER; --vertical pixel coordinate
+            n_blank : OUT STD_LOGIC; --direct blacking output to DAC
+            n_sync : OUT STD_LOGIC); --sync-on-green output to DAC
     END COMPONENT;
 BEGIN
-    controller : VgaController PORT MAP(
-        clk => vga_clk,
-        rgb_in => rgb_input,
-        rgb_out => rgb_output,
-        hsync => vga_hsync,
-        vsync => vga_vsync,
-        hpos => hpos,
-        vpos => vpos
-    );
-
-    debounce_up_switch : Debounce PORT MAP(
-        i_Clk => vga_clk,
-        i_Switch => up,
-        o_Switch => up_debounced
-    );
-
-    debounce_down_switch : Debounce PORT MAP(
-        i_Clk => vga_clk,
-        i_Switch => down,
-        o_Switch => down_debounced
-    );
-
-    debounce_left_switch : Debounce PORT MAP(
-        i_Clk => vga_clk,
-        i_Switch => left,
-        o_Switch => left_debounced
-    );
-
-    debounce_right_switch : Debounce PORT MAP(
-        i_Clk => vga_clk,
-        i_Switch => right,
-        o_Switch => right_debounced
+    controller : VgaController GENERIC MAP(
+        h_pulse => H_SYNC_PULSE,
+        h_bp => H_BACK_PORCH,
+        h_pixels => H_PIXELS,
+        h_fp => H_FRONT_PORCH,
+        h_pol => H_SYNC_POLARITY,
+        v_pulse => V_SYNC_PULSE,
+        v_bp => V_BACK_PORCH,
+        v_pixels => V_PIXELS,
+        v_fp => V_FRONT_PORCH,
+        v_pol => V_SYNC_POLARITY
+    )
+    PORT MAP(
+        pixel_clk => vga_clk,
+        reset_n => '1',
+        h_sync => vga_hsync,
+        v_sync => vga_vsync,
+        disp_ena => display_enable,
+        column => column,
+        row => row
     );
 
     rgb <= rgb_output;
     hsync <= vga_hsync;
     vsync <= vga_vsync;
-
-    move_square_en <= up_debounced XOR down_debounced XOR left_debounced XOR right_debounced;
-    should_move_square <= square_speed_count = SQUARE_SPEED;
-
-    Square(hpos, vpos, square_x, square_y, SQUARE_SIZE, should_draw_square);
 
     -- We need 25MHz for the VGA so we divide the input clock by 2
     PROCESS (clk)
@@ -111,65 +88,14 @@ BEGIN
             vga_clk <= NOT vga_clk;
         END IF;
     END PROCESS;
-
     PROCESS (vga_clk)
     BEGIN
         IF (rising_edge(vga_clk)) THEN
-            IF (should_draw_square) THEN
-                rgb_input <= COLOR_GREEN;
+            IF (display_enable = '1') THEN
+                rgb_output <= COLOR_PURPLE;
             ELSE
-                rgb_input <= COLOR_BLACK;
+                rgb_output <= COLOR_BLACK;
             END IF;
-        END IF;
-    END PROCESS;
-
-    PROCESS (vga_clk)
-    BEGIN
-        IF (rising_edge(vga_clk)) THEN
-            IF (move_square_en = '1') THEN
-                IF should_move_square THEN
-                    square_speed_count <= 0;
-                ELSE
-                    square_speed_count <= square_speed_count + 1;
-                END IF;
-            ELSE
-                square_speed_count <= 0;
-            END IF;
-
-            IF (should_move_square) THEN
-                IF (up_debounced = '0') THEN
-                    IF (square_y <= VDATA_BEGIN) THEN
-                        square_y <= VDATA_BEGIN;
-                    ELSE
-                        square_y <= square_y - 1;
-                    END IF;
-                END IF;
-
-                IF (down_debounced = '0') THEN
-                    IF (square_y >= VDATA_END - SQUARE_SIZE) THEN
-                        square_y <= VDATA_END - SQUARE_SIZE;
-                    ELSE
-                        square_y <= square_y + 1;
-                    END IF;
-                END IF;
-
-                IF (left_debounced = '0') THEN
-                    IF (square_x <= HDATA_BEGIN) THEN
-                        square_x <= HDATA_BEGIN;
-                    ELSE
-                        square_x <= square_x - 1;
-                    END IF;
-                END IF;
-
-                IF (right_debounced = '0') THEN
-                    IF (square_x >= HDATA_END - SQUARE_SIZE) THEN
-                        square_x <= HDATA_END - SQUARE_SIZE;
-                    ELSE
-                        square_x <= square_x + 1;
-                    END IF;
-                END IF;
-            END IF;
-
         END IF;
     END PROCESS;
 END ARCHITECTURE;
