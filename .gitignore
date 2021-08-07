@@ -42,6 +42,8 @@
 /*
 !/*.gitignore
 !/*.md
+!/*.toml
+!.vscode
 ##
 !*.qpf
 !*.qsf
