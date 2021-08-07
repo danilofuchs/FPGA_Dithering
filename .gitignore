@@ -44,6 +44,7 @@
 !/*.md
 !/*.toml
 !.vscode
+!docs
 ##
 !*.qpf
 !*.qsf
