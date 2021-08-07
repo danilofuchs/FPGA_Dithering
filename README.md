@@ -6,3 +6,7 @@ algorithm for FPGA.
 ## The board
 
 Built for RZ-EasyFPGA A2.2
+
+## The project
+
+- VGA integration base files come from: https://github.com/fsmiamoto/EasyFPGA-VGA
