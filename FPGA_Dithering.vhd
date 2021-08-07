@@ -28,6 +28,7 @@ ARCHITECTURE rtl OF FPGA_Dithering IS
 
     SIGNAL vga_hsync, vga_vsync : STD_LOGIC;
     SIGNAL display_enable : STD_LOGIC;
+    SIGNAL dithered_pixel : STD_LOGIC;
     SIGNAL rgb_output : STD_LOGIC_VECTOR (2 DOWNTO 0);
     SIGNAL column, row : INTEGER;
 
@@ -91,12 +92,16 @@ BEGIN
         pixel => "10000000",
         row => row,
         column => column,
-        dithered_pixel => rgb_output(1)
+        dithered_pixel => dithered_pixel
     );
-    rgb_output(0) <= '0';
-    rgb_output(2) <= '0';
 
-    rgb <= rgb_output;
+    -- Displays White
+    rgb_output <= (OTHERS => dithered_pixel);
+
+    rgb <=
+        rgb_output WHEN display_enable = '1' ELSE
+        "000";
+
     hsync <= vga_hsync;
     vsync <= vga_vsync;
 
