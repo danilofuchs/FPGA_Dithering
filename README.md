@@ -27,8 +27,8 @@ correct timing according to this sheet:
 
 The provided `VgaController` is generic and can be configured with any timing specification.
 
-As the RZ-EasyFPGA A2.2 only supports a 50MHz clock, we are going to limit this
-project to outputting 640x480 pixels at 60Hz.
+As the RZ-EasyFPGA A2.2 only supports a fixed 50MHz clock, we can only output
+640x480@60Hz (25Mhz Pixel Frequency) or 800x600@72Hz (50Mhz pixel freq).
 
 ![VGA 640x480 60 Timings](./docs/vga_640x480_60_timings.png)
 
