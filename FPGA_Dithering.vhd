@@ -54,6 +54,16 @@ ARCHITECTURE rtl OF FPGA_Dithering IS
             n_blank : OUT STD_LOGIC; --direct blacking output to DAC
             n_sync : OUT STD_LOGIC); --sync-on-green output to DAC
     END COMPONENT;
+
+    COMPONENT OrderedDitherer IS
+        PORT (
+            pixel : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+            row : IN INTEGER;
+            column : IN INTEGER;
+
+            dithered_pixel : OUT STD_LOGIC
+        );
+    END COMPONENT;
 BEGIN
     controller : VgaController GENERIC MAP(
         h_pulse => H_SYNC_PULSE,
@@ -77,6 +87,15 @@ BEGIN
         row => row
     );
 
+    ordered_ditherer : OrderedDitherer PORT MAP(
+        pixel => "10000000",
+        row => row,
+        column => column,
+        dithered_pixel => rgb_output(1)
+    );
+    rgb_output(0) <= '0';
+    rgb_output(2) <= '0';
+
     rgb <= rgb_output;
     hsync <= vga_hsync;
     vsync <= vga_vsync;
@@ -86,16 +105,6 @@ BEGIN
     BEGIN
         IF (rising_edge(clk)) THEN
             vga_clk <= NOT vga_clk;
-        END IF;
-    END PROCESS;
-    PROCESS (vga_clk)
-    BEGIN
-        IF (rising_edge(vga_clk)) THEN
-            IF (display_enable = '1') THEN
-                rgb_output <= COLOR_PURPLE;
-            ELSE
-                rgb_output <= COLOR_BLACK;
-            END IF;
         END IF;
     END PROCESS;
 END ARCHITECTURE;
