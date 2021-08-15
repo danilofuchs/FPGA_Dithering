@@ -39,9 +39,12 @@ ARCHITECTURE rtl OF FPGA_Dithering IS
 
     COMPONENT ImageLoader IS
         GENERIC (
-            file_name : IN STRING
+            file_name : IN STRING;
+            image_width : IN INTEGER;
+            image_height : IN INTEGER
         );
         PORT (
+            clk : IN STD_LOGIC;
             x : IN INTEGER;
             y : IN INTEGER;
             pixel : OUT pixel_type
@@ -83,9 +86,12 @@ ARCHITECTURE rtl OF FPGA_Dithering IS
     END COMPONENT;
 BEGIN
     bmp_loader : ImageLoader GENERIC MAP(
-        file_name => "images/lena.mif"
+        file_name => "images/lena.mif",
+        image_width => 300,
+        image_height => 420
     )
     PORT MAP(
+        clk => vga_clk,
         x => 0,
         y => 0,
         pixel => pixel
@@ -112,7 +118,6 @@ BEGIN
         column => column,
         row => row
     );
-
     red_ditherer : OrderedDitherer PORT MAP(
         pixel => pixel.red,
         row => row,

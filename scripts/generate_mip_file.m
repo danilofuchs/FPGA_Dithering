@@ -12,12 +12,12 @@ gray = im2gray(src);
 [width, height] = size(gray);
 
 % Header containing the image dimensions
-header = [width, height];
+% header = [width, height];
 
 % Convert to 1xN vector
-data = reshape(gray, 1, []);
+data = reshape(gray, 1, width * height);
 
-content = [header, data];
+content = data; %cat(2, header, uint16(data));
 
 depth = length(content)
 word_length = 8; % 8 bits per pixel (grayscale)

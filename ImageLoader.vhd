@@ -8,9 +8,12 @@ USE work.Pixel.ALL;
 
 ENTITY ImageLoader IS
     GENERIC (
-        file_name : IN STRING
+        file_name : IN STRING;
+        image_width : IN INTEGER;
+        image_height : IN INTEGER
     );
     PORT (
+        clk : IN STD_LOGIC;
         x : IN INTEGER;
         y : IN INTEGER;
         pixel : OUT pixel_type
@@ -18,30 +21,38 @@ ENTITY ImageLoader IS
 END ENTITY ImageLoader;
 
 ARCHITECTURE rtl OF ImageLoader IS
-    CONSTANT HEADER_LENGTH : INTEGER := 2;
 
-    TYPE mem_t IS ARRAY(0 TO 126002) OF unsigned(7 DOWNTO 0);
+    TYPE mem_t IS ARRAY(0 TO 126000) OF unsigned(7 DOWNTO 0);
     SIGNAL ram : mem_t;
     ATTRIBUTE ram_init_file : STRING;
     ATTRIBUTE ram_init_file OF ram : SIGNAL IS file_name;
 
-    SIGNAL image_width, image_height : INTEGER;
     SIGNAL pixel_index : INTEGER;
 BEGIN
-    image_width <= to_integer(ram(0));
-    image_height <= to_integer(ram(1));
 
-    pixel_index <= HEADER_LENGTH + (y * image_height) + x;
+    PROCESS (clk)
+    BEGIN
+        IF rising_edge(clk) THEN
+            pixel_index <= (y * image_width) + x;
 
-    pixel.red <= STD_LOGIC_VECTOR(ram(pixel_index))
-    WHEN (x <= image_width AND y <= image_height) ELSE
-    "00000000";
+            IF (x <= image_width AND y <= image_height) THEN
+                pixel.green <= STD_LOGIC_VECTOR(ram(pixel_index));
+            ELSE
+                pixel.green <= "00000000";
+            END IF;
 
-    pixel.green <= STD_LOGIC_VECTOR(ram(pixel_index))
-    WHEN (x <= image_width AND y <= image_height) ELSE
-    "00000000";
+            IF (x <= image_width AND y <= image_height) THEN
+                pixel.blue <= STD_LOGIC_VECTOR(ram(pixel_index));
+            ELSE
+                pixel.blue <= "00000000";
+            END IF;
 
-    pixel.blue <= STD_LOGIC_VECTOR(ram(pixel_index))
-    WHEN (x <= image_width AND y <= image_height) ELSE
-    "00000000";
+            IF (x <= image_width AND y <= image_height) THEN
+                pixel.red <= STD_LOGIC_VECTOR(ram(pixel_index));
+            ELSE
+                pixel.red <= "00000000";
+            END IF;
+
+        END IF;
+    END PROCESS;
 END ARCHITECTURE;
