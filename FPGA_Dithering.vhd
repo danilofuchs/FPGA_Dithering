@@ -1,7 +1,10 @@
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
+
 USE work.VgaUtils.ALL;
+
+USE work.Pixel.ALL;
 
 ENTITY FPGA_Dithering IS
     PORT (
@@ -31,6 +34,19 @@ ARCHITECTURE rtl OF FPGA_Dithering IS
     SIGNAL dithered_red_pixel, dithered_green_pixel, dithered_blue_pixel : STD_LOGIC;
     SIGNAL rgb_output : STD_LOGIC_VECTOR (2 DOWNTO 0);
     SIGNAL column, row : INTEGER;
+
+    SIGNAL pixel : pixel_type;
+
+    COMPONENT ImageLoader IS
+        GENERIC (
+            file_name : IN STRING
+        );
+        PORT (
+            x : IN INTEGER;
+            y : IN INTEGER;
+            pixel : OUT pixel_type
+        );
+    END COMPONENT;
 
     COMPONENT VgaController IS
         GENERIC (
@@ -66,6 +82,15 @@ ARCHITECTURE rtl OF FPGA_Dithering IS
         );
     END COMPONENT;
 BEGIN
+    bmp_loader : ImageLoader GENERIC MAP(
+        file_name => "images/lena.mif"
+    )
+    PORT MAP(
+        x => 0,
+        y => 0,
+        pixel => pixel
+    );
+
     controller : VgaController GENERIC MAP(
         h_pulse => H_SYNC_PULSE,
         h_bp => H_BACK_PORCH,
@@ -89,19 +114,19 @@ BEGIN
     );
 
     red_ditherer : OrderedDitherer PORT MAP(
-        pixel => "01011111",
+        pixel => pixel.red,
         row => row,
         column => column,
         dithered_pixel => dithered_red_pixel
     );
     green_ditherer : OrderedDitherer PORT MAP(
-        pixel => "00111111",
+        pixel => pixel.green,
         row => row,
         column => column,
         dithered_pixel => dithered_green_pixel
     );
     blue_ditherer : OrderedDitherer PORT MAP(
-        pixel => "00110111",
+        pixel => pixel.blue,
         row => row,
         column => column,
         dithered_pixel => dithered_blue_pixel
