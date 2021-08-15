@@ -85,15 +85,16 @@ ARCHITECTURE rtl OF FPGA_Dithering IS
         );
     END COMPONENT;
 BEGIN
-    bmp_loader : ImageLoader GENERIC MAP(
+    lena_image : ImageLoader
+    GENERIC MAP(
         file_name => "images/lena.mif",
         image_width => 300,
         image_height => 420
     )
     PORT MAP(
         clk => vga_clk,
-        x => 0,
-        y => 0,
+        x => column,
+        y => row,
         pixel => pixel
     );
 
