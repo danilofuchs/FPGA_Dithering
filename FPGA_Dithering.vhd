@@ -40,25 +40,13 @@ ARCHITECTURE rtl OF FPGA_Dithering IS
 
     SIGNAL q : STD_LOGIC_VECTOR(7 DOWNTO 0);
 
-    COMPONENT ROM
-        GENERIC (
-            init_file : STRING;
-            data_width : INTEGER;
-            address_width : INTEGER;
-            memory_size : INTEGER
-        );
-        PORT (
-            address : IN STD_LOGIC_VECTOR (address_width - 1 DOWNTO 0);
-            clock : IN STD_LOGIC := '1';
-            q : OUT STD_LOGIC_VECTOR (data_width - 1 DOWNTO 0)
-        );
-    END COMPONENT;
-
     COMPONENT ImageLoader IS
         GENERIC (
-            file_name : IN STRING;
+            init_file : IN STRING;
             image_width : IN INTEGER;
-            image_height : IN INTEGER
+            image_height : IN INTEGER;
+            memory_size : INTEGER;
+            address_width : INTEGER
         );
         PORT (
             clk : IN STD_LOGIC;
@@ -109,36 +97,22 @@ ARCHITECTURE rtl OF FPGA_Dithering IS
         );
     END COMPONENT;
 BEGIN
-    lena_rom : ROM
+    lena_rom : ImageLoader
     GENERIC MAP(
         init_file => "./images/lena.mif",
-        data_width => 8,
-        address_width => 17,
-        memory_size => 126000
+        image_width => 320,
+        image_height => 400,
+        memory_size => 16384,
+        address_width => 14
     )
     PORT MAP(
-        clock => clk,
-        address => "00000000000000000",
-        q => q
+        clk => vga_clk,
+        x => column,
+        y => row,
+        pixel => pixel
     );
-    led(0) <= q(0);
-    led(1) <= q(1);
-    led(2) <= q(2);
-    led(3) <= q(3);
-    -- lena_image : ImageLoader
-    -- GENERIC MAP(
-    --     file_name => "images/lena.mif",
-    --     image_width => 300,
-    --     image_height => 420
-    -- )
-    -- PORT MAP(
-    --     clk => vga_clk,
-    --     x => column,
-    --     y => row,
-    --     pixel => pixel
-    -- );
 
-    controller : VgaController GENERIC MAP(
+    vga_controller : VgaController GENERIC MAP(
         h_pulse => H_SYNC_PULSE,
         h_bp => H_BACK_PORCH,
         h_pixels => H_PIXELS,

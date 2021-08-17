@@ -1,6 +1,8 @@
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
+USE ieee.math_real.ALL;
+USE ieee.std_logic_arith.ALL;
 
 LIBRARY std;
 
@@ -8,9 +10,11 @@ USE work.Pixel.ALL;
 
 ENTITY ImageLoader IS
     GENERIC (
-        file_name : IN STRING;
-        image_width : IN INTEGER;
-        image_height : IN INTEGER
+        init_file : STRING;
+        image_width : INTEGER;
+        image_height : INTEGER;
+        memory_size : INTEGER;
+        address_width : INTEGER
     );
     PORT (
         clk : IN STD_LOGIC;
@@ -21,38 +25,49 @@ ENTITY ImageLoader IS
 END ENTITY ImageLoader;
 
 ARCHITECTURE rtl OF ImageLoader IS
-
-    TYPE mem_t IS ARRAY(0 TO 126000) OF unsigned(7 DOWNTO 0);
-    SIGNAL ram : mem_t;
-    ATTRIBUTE ram_init_file : STRING;
-    ATTRIBUTE ram_init_file OF ram : SIGNAL IS file_name;
+    COMPONENT ROM
+        GENERIC (
+            init_file : STRING;
+            data_width : INTEGER;
+            address_width : INTEGER;
+            memory_size : INTEGER
+        );
+        PORT (
+            address : IN STD_LOGIC_VECTOR (address_width - 1 DOWNTO 0);
+            clock : IN STD_LOGIC := '1';
+            q : OUT STD_LOGIC_VECTOR (data_width - 1 DOWNTO 0)
+        );
+    END COMPONENT;
 
     SIGNAL pixel_index : INTEGER;
+    SIGNAL pixel_address : STD_LOGIC_VECTOR(address_width - 1 DOWNTO 0);
+    SIGNAL pixel_data : STD_LOGIC_VECTOR(7 DOWNTO 0);
+
+    SIGNAL should_draw : BOOLEAN;
 BEGIN
+    image : ROM
+    GENERIC MAP(
+        init_file => init_file,
+        data_width => 8,
+        address_width => address_width,
+        memory_size => memory_size
+    )
+    PORT MAP(
+        clock => clk,
+        address => pixel_address,
+        q => pixel_data
+    );
 
-    PROCESS (clk)
-    BEGIN
-        IF rising_edge(clk) THEN
-            pixel_index <= (y * image_width) + x;
+    pixel_index <= (y * image_width) + x;
+    pixel_address <= conv_std_logic_vector(pixel_index, pixel_address'length);
 
-            IF (x <= image_width AND y <= image_height) THEN
-                pixel.green <= STD_LOGIC_VECTOR(ram(pixel_index));
-            ELSE
-                pixel.green <= "00000000";
-            END IF;
+    should_draw <= (x <= image_width AND y <= image_height AND pixel_index <= memory_size);
 
-            IF (x <= image_width AND y <= image_height) THEN
-                pixel.blue <= STD_LOGIC_VECTOR(ram(pixel_index));
-            ELSE
-                pixel.blue <= "00000000";
-            END IF;
+    pixel.red <= pixel_data WHEN (should_draw) ELSE
+    "00000000";
+    pixel.green <= pixel_data WHEN (should_draw) ELSE
+    "00000000";
+    pixel.blue <= pixel_data WHEN (should_draw) ELSE
+    "00000000";
 
-            IF (x <= image_width AND y <= image_height) THEN
-                pixel.red <= STD_LOGIC_VECTOR(ram(pixel_index));
-            ELSE
-                pixel.red <= "00000000";
-            END IF;
-
-        END IF;
-    END PROCESS;
 END ARCHITECTURE;
