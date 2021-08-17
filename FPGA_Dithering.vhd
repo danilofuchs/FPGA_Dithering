@@ -17,16 +17,6 @@ entity FPGA_Dithering is
 end entity FPGA_Dithering;
 
 architecture rtl of FPGA_Dithering is
-
-    constant COLOR_WHITE : STD_LOGIC_VECTOR := "111";
-    constant COLOR_YELLOW : STD_LOGIC_VECTOR := "110";
-    constant COLOR_PURPLE : STD_LOGIC_VECTOR := "101";
-    constant COLOR_RED : STD_LOGIC_VECTOR := "100";
-    constant COLOR_WATER : STD_LOGIC_VECTOR := "011";
-    constant COLOR_GREEN : STD_LOGIC_VECTOR := "010";
-    constant COLOR_BLUE : STD_LOGIC_VECTOR := "001";
-    constant COLOR_BLACK : STD_LOGIC_VECTOR := "000";
-
     -- VGA Clock - 25 MHz clock derived from the 50MHz built-in clock
     signal vga_clk : STD_LOGIC;
 
@@ -50,8 +40,8 @@ architecture rtl of FPGA_Dithering is
         );
         port (
             clk : in STD_LOGIC;
-            x : in INTEGER;
-            y : in INTEGER;
+            column : in INTEGER;
+            row : in INTEGER;
             pixel : out pixel_type
         );
     end component;
@@ -100,15 +90,15 @@ begin
     lena_rom : ImageLoader
     generic map(
         init_file => "./images/lena.mif",
-        image_width => 320,
-        image_height => 400,
-        memory_size => 16384,
+        image_width => 100,
+        image_height => 140,
+        memory_size => 14000,
         address_width => 14
     )
     port map(
-        clk => vga_clk,
-        x => column,
-        y => row,
+        clk => clk,
+        column => column,
+        row => row,
         pixel => pixel
     );
 

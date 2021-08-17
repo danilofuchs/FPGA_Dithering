@@ -18,8 +18,8 @@ entity ImageLoader is
     );
     port (
         clk : in STD_LOGIC;
-        x : in INTEGER;
-        y : in INTEGER;
+        column : in INTEGER;
+        row : in INTEGER;
         pixel : out pixel_type
     );
 end entity ImageLoader;
@@ -58,10 +58,11 @@ begin
         q => pixel_data
     );
 
-    pixel_index <= (y * image_width) + x;
+    -- Image is serialized column-major
+    pixel_index <= row + (column * image_height);
     pixel_address <= conv_std_logic_vector(pixel_index, pixel_address'length);
 
-    should_draw <= (x <= image_width and y <= image_height and pixel_index <= memory_size);
+    should_draw <= (column <= image_width and row <= image_height and pixel_index <= memory_size);
 
     pixel.red <= pixel_data when (should_draw) else
     "00000000";

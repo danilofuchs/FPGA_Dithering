@@ -7,15 +7,13 @@ filename = 'lena.gif';
 
 src = imread(strcat('../images/', filename));
 gray = im2gray(src);
+resized = imresize(gray, [NaN 100]);
 
 % Size of picture
-[width, height] = size(gray);
-
-% Header containing the image dimensions
-% header = [width, height];
+[height, width] = size(resized)
 
 % Convert to 1xN vector
-data = reshape(gray, 1, width * height);
+data = reshape(resized, 1, width * height);
 
 content = data; %cat(2, header, uint16(data));
 
