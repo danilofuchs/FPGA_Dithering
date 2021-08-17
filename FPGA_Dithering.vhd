@@ -11,7 +11,8 @@ ENTITY FPGA_Dithering IS
         clk : IN STD_LOGIC; -- Pin 23, 50MHz from the onboard oscillator.
         rgb : OUT STD_LOGIC_VECTOR (2 DOWNTO 0); -- Pins 106, 105 and 104
         hsync : OUT STD_LOGIC; -- Pin 101
-        vsync : OUT STD_LOGIC -- Pin 103
+        vsync : OUT STD_LOGIC; -- Pin 103
+        led : OUT STD_LOGIC_VECTOR(3 DOWNTO 0) -- Pin 87, 86, 85, 84
     );
 END ENTITY FPGA_Dithering;
 
@@ -37,6 +38,16 @@ ARCHITECTURE rtl OF FPGA_Dithering IS
 
     SIGNAL pixel : pixel_type;
 
+    SIGNAL q : STD_LOGIC_VECTOR(7 DOWNTO 0);
+
+    COMPONENT ROM
+        PORT (
+            address : IN STD_LOGIC_VECTOR (16 DOWNTO 0);
+            clock : IN STD_LOGIC := '1';
+            q : OUT STD_LOGIC_VECTOR (7 DOWNTO 0)
+        );
+    END COMPONENT;
+
     COMPONENT ImageLoader IS
         GENERIC (
             file_name : IN STRING;
@@ -48,6 +59,13 @@ ARCHITECTURE rtl OF FPGA_Dithering IS
             x : IN INTEGER;
             y : IN INTEGER;
             pixel : OUT pixel_type
+        );
+    END COMPONENT;
+
+    COMPONENT SevenSegmentsDecoder IS
+        PORT (
+            input : IN STD_LOGIC_VECTOR (3 DOWNTO 0);
+            output : OUT STD_LOGIC_VECTOR (6 DOWNTO 0)
         );
     END COMPONENT;
 
@@ -85,18 +103,28 @@ ARCHITECTURE rtl OF FPGA_Dithering IS
         );
     END COMPONENT;
 BEGIN
-    lena_image : ImageLoader
-    GENERIC MAP(
-        file_name => "images/lena.mif",
-        image_width => 300,
-        image_height => 420
-    )
+    lena_rom : ROM
     PORT MAP(
-        clk => vga_clk,
-        x => column,
-        y => row,
-        pixel => pixel
+        clock => clk,
+        address => "00000000000000000",
+        q => q
     );
+    led(0) <= q(0);
+    led(1) <= q(1);
+    led(2) <= q(2);
+    led(3) <= q(3);
+    -- lena_image : ImageLoader
+    -- GENERIC MAP(
+    --     file_name => "images/lena.mif",
+    --     image_width => 300,
+    --     image_height => 420
+    -- )
+    -- PORT MAP(
+    --     clk => vga_clk,
+    --     x => column,
+    --     y => row,
+    --     pixel => pixel
+    -- );
 
     controller : VgaController GENERIC MAP(
         h_pulse => H_SYNC_PULSE,

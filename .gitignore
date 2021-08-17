@@ -65,3 +65,5 @@
 
 !images
 !scripts
+!*.qip
+!*.cmp
