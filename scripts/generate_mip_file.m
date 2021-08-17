@@ -1,37 +1,54 @@
 % Creates a .mif file from an image,
 % containing the image in grayscale.
 
-filename = 'lena.gif';
+write_mif('lena.gif', 'lena.mif', [140 100], true);
 
-[~, name, ~] = fileparts(filename);
+function write_mif(filename, out_filename, target_size, grayscale)
+    path = '../images/';
+    maximum_bits = 276480; % Maximum memory size on the FPGA board
 
-src = imread(strcat('../images/', filename));
-gray = im2gray(src);
-resized = imresize(gray, [NaN 100]);
+    pixel_depth = 24; % Full color
 
-% Size of picture
-[height, width] = size(resized)
+    if (grayscale)
+        pixel_depth = 8; % Grayscale
+    end
 
-% Convert to 1xN vector
-data = reshape(resized, 1, width * height);
+    if (target_size(1) * target_size(2) * pixel_depth > maximum_bits)
+        error('Target image size too large for FPGA memory');
+    end
 
-content = data; %cat(2, header, uint16(data));
+    img = imread(strcat(path, filename));
 
-depth = length(content)
-word_length = 8; % 8 bits per pixel (grayscale)
+    if (grayscale)
+        img = im2gray(img);
+    end
 
-fid = fopen(strcat('../images/', name, '.mif'), 'w');
-fprintf(fid, 'DEPTH=%d;\n', depth);
-fprintf(fid, 'WIDTH=%d;\n', word_length);
+    resized = imresize(img, target_size);
 
-fprintf(fid, 'ADDRESS_RADIX = UNS;\n');
-fprintf(fid, 'DATA_RADIX = HEX;\n');
-fprintf(fid, 'CONTENT\t');
-fprintf(fid, 'BEGIN\n');
+    % Size of picture
+    [height, width] = size(resized);
 
-for i = 0:length(content) - 1
-    fprintf(fid, '\t%d\t:\t%x;\n', i, content(i + 1));
+    % Convert to 1xN vector
+    data = reshape(resized, 1, width * height);
+
+    depth = length(data);
+    word_length = pixel_depth;
+
+    fid = fopen(strcat(path, out_filename), 'w');
+    fprintf(fid, 'DEPTH=%d;\n', depth);
+    fprintf(fid, 'WIDTH=%d;\n', word_length);
+
+    fprintf(fid, 'ADDRESS_RADIX = UNS;\n');
+    fprintf(fid, 'DATA_RADIX = HEX;\n');
+    fprintf(fid, 'CONTENT\t');
+    fprintf(fid, 'BEGIN\n');
+
+    for i = 0:length(data) - 1
+        fprintf(fid, '\t%d\t:\t%x;\n', i, data(i + 1));
+    end
+
+    fprintf(fid, 'END;\n');
+    fclose(fid);
+
+    fprintf('[%s] Height: %d, Width: %d, Depth: %d\n', out_filename, height, width, depth);
 end
-
-fprintf(fid, 'END;\n');
-fclose(fid);
