@@ -1,70 +1,70 @@
-LIBRARY ieee;
-USE ieee.std_logic_1164.ALL;
-USE ieee.numeric_std.ALL;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
-USE work.VgaUtils.ALL;
+use work.VgaUtils.all;
 
-USE work.Pixel.ALL;
+use work.Pixel.all;
 
-ENTITY FPGA_Dithering IS
-    PORT (
-        clk : IN STD_LOGIC; -- Pin 23, 50MHz from the onboard oscillator.
-        rgb : OUT STD_LOGIC_VECTOR (2 DOWNTO 0); -- Pins 106, 105 and 104
-        hsync : OUT STD_LOGIC; -- Pin 101
-        vsync : OUT STD_LOGIC; -- Pin 103
-        led : OUT STD_LOGIC_VECTOR(3 DOWNTO 0) -- Pin 87, 86, 85, 84
+entity FPGA_Dithering is
+    port (
+        clk : in STD_LOGIC; -- Pin 23, 50MHz from the onboard oscillator.
+        rgb : out STD_LOGIC_VECTOR (2 downto 0); -- Pins 106, 105 and 104
+        hsync : out STD_LOGIC; -- Pin 101
+        vsync : out STD_LOGIC; -- Pin 103
+        led : out STD_LOGIC_VECTOR(3 downto 0) -- Pin 87, 86, 85, 84
     );
-END ENTITY FPGA_Dithering;
+end entity FPGA_Dithering;
 
-ARCHITECTURE rtl OF FPGA_Dithering IS
+architecture rtl of FPGA_Dithering is
 
-    CONSTANT COLOR_WHITE : STD_LOGIC_VECTOR := "111";
-    CONSTANT COLOR_YELLOW : STD_LOGIC_VECTOR := "110";
-    CONSTANT COLOR_PURPLE : STD_LOGIC_VECTOR := "101";
-    CONSTANT COLOR_RED : STD_LOGIC_VECTOR := "100";
-    CONSTANT COLOR_WATER : STD_LOGIC_VECTOR := "011";
-    CONSTANT COLOR_GREEN : STD_LOGIC_VECTOR := "010";
-    CONSTANT COLOR_BLUE : STD_LOGIC_VECTOR := "001";
-    CONSTANT COLOR_BLACK : STD_LOGIC_VECTOR := "000";
+    constant COLOR_WHITE : STD_LOGIC_VECTOR := "111";
+    constant COLOR_YELLOW : STD_LOGIC_VECTOR := "110";
+    constant COLOR_PURPLE : STD_LOGIC_VECTOR := "101";
+    constant COLOR_RED : STD_LOGIC_VECTOR := "100";
+    constant COLOR_WATER : STD_LOGIC_VECTOR := "011";
+    constant COLOR_GREEN : STD_LOGIC_VECTOR := "010";
+    constant COLOR_BLUE : STD_LOGIC_VECTOR := "001";
+    constant COLOR_BLACK : STD_LOGIC_VECTOR := "000";
 
     -- VGA Clock - 25 MHz clock derived from the 50MHz built-in clock
-    SIGNAL vga_clk : STD_LOGIC;
+    signal vga_clk : STD_LOGIC;
 
-    SIGNAL vga_hsync, vga_vsync : STD_LOGIC;
-    SIGNAL display_enable : STD_LOGIC;
-    SIGNAL dithered_red_pixel, dithered_green_pixel, dithered_blue_pixel : STD_LOGIC;
-    SIGNAL rgb_output : STD_LOGIC_VECTOR (2 DOWNTO 0);
-    SIGNAL column, row : INTEGER;
+    signal vga_hsync, vga_vsync : STD_LOGIC;
+    signal display_enable : STD_LOGIC;
+    signal dithered_red_pixel, dithered_green_pixel, dithered_blue_pixel : STD_LOGIC;
+    signal rgb_output : STD_LOGIC_VECTOR (2 downto 0);
+    signal column, row : INTEGER;
 
-    SIGNAL pixel : pixel_type;
+    signal pixel : pixel_type;
 
-    SIGNAL q : STD_LOGIC_VECTOR(7 DOWNTO 0);
+    signal q : STD_LOGIC_VECTOR(7 downto 0);
 
-    COMPONENT ImageLoader IS
-        GENERIC (
-            init_file : IN STRING;
-            image_width : IN INTEGER;
-            image_height : IN INTEGER;
+    component ImageLoader is
+        generic (
+            init_file : in STRING;
+            image_width : in INTEGER;
+            image_height : in INTEGER;
             memory_size : INTEGER;
             address_width : INTEGER
         );
-        PORT (
-            clk : IN STD_LOGIC;
-            x : IN INTEGER;
-            y : IN INTEGER;
-            pixel : OUT pixel_type
+        port (
+            clk : in STD_LOGIC;
+            x : in INTEGER;
+            y : in INTEGER;
+            pixel : out pixel_type
         );
-    END COMPONENT;
+    end component;
 
-    COMPONENT SevenSegmentsDecoder IS
-        PORT (
-            input : IN STD_LOGIC_VECTOR (3 DOWNTO 0);
-            output : OUT STD_LOGIC_VECTOR (6 DOWNTO 0)
+    component SevenSegmentsDecoder is
+        port (
+            input : in STD_LOGIC_VECTOR (3 downto 0);
+            output : out STD_LOGIC_VECTOR (6 downto 0)
         );
-    END COMPONENT;
+    end component;
 
-    COMPONENT VgaController IS
-        GENERIC (
+    component VgaController is
+        generic (
             h_pulse : INTEGER := 208; --horizontal sync pulse width in pixels
             h_bp : INTEGER := 336; --horizontal back porch width in pixels
             h_pixels : INTEGER := 1920; --horizontal display width in pixels
@@ -75,44 +75,44 @@ ARCHITECTURE rtl OF FPGA_Dithering IS
             v_pixels : INTEGER := 1200; --vertical display width in rows
             v_fp : INTEGER := 1; --vertical front porch width in rows
             v_pol : STD_LOGIC := '1'); --vertical sync pulse polarity (1 = positive, 0 = negative)
-        PORT (
-            pixel_clk : IN STD_LOGIC; --pixel clock at frequency of VGA mode being used
-            reset_n : IN STD_LOGIC; --active low asynchronous reset
-            h_sync : OUT STD_LOGIC; --horizontal sync pulse
-            v_sync : OUT STD_LOGIC; --vertical sync pulse
-            disp_ena : OUT STD_LOGIC; --display enable ('1' = display time, '0' = blanking time)
-            column : OUT INTEGER; --horizontal pixel coordinate
-            row : OUT INTEGER; --vertical pixel coordinate
-            n_blank : OUT STD_LOGIC; --direct blacking output to DAC
-            n_sync : OUT STD_LOGIC); --sync-on-green output to DAC
-    END COMPONENT;
+        port (
+            pixel_clk : in STD_LOGIC; --pixel clock at frequency of VGA mode being used
+            reset_n : in STD_LOGIC; --active low asynchronous reset
+            h_sync : out STD_LOGIC; --horizontal sync pulse
+            v_sync : out STD_LOGIC; --vertical sync pulse
+            disp_ena : out STD_LOGIC; --display enable ('1' = display time, '0' = blanking time)
+            column : out INTEGER; --horizontal pixel coordinate
+            row : out INTEGER; --vertical pixel coordinate
+            n_blank : out STD_LOGIC; --direct blacking output to DAC
+            n_sync : out STD_LOGIC); --sync-on-green output to DAC
+    end component;
 
-    COMPONENT OrderedDitherer IS
-        PORT (
-            pixel : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
-            row : IN INTEGER;
-            column : IN INTEGER;
+    component OrderedDitherer is
+        port (
+            pixel : in STD_LOGIC_VECTOR(7 downto 0);
+            row : in INTEGER;
+            column : in INTEGER;
 
-            dithered_pixel : OUT STD_LOGIC
+            dithered_pixel : out STD_LOGIC
         );
-    END COMPONENT;
-BEGIN
+    end component;
+begin
     lena_rom : ImageLoader
-    GENERIC MAP(
+    generic map(
         init_file => "./images/lena.mif",
         image_width => 320,
         image_height => 400,
         memory_size => 16384,
         address_width => 14
     )
-    PORT MAP(
+    port map(
         clk => vga_clk,
         x => column,
         y => row,
         pixel => pixel
     );
 
-    vga_controller : VgaController GENERIC MAP(
+    vga_controller : VgaController generic map(
         h_pulse => H_SYNC_PULSE,
         h_bp => H_BACK_PORCH,
         h_pixels => H_PIXELS,
@@ -124,7 +124,7 @@ BEGIN
         v_fp => V_FRONT_PORCH,
         v_pol => V_SYNC_POLARITY
     )
-    PORT MAP(
+    port map(
         pixel_clk => vga_clk,
         reset_n => '1',
         h_sync => vga_hsync,
@@ -133,19 +133,19 @@ BEGIN
         column => column,
         row => row
     );
-    red_ditherer : OrderedDitherer PORT MAP(
+    red_ditherer : OrderedDitherer port map(
         pixel => pixel.red,
         row => row,
         column => column,
         dithered_pixel => dithered_red_pixel
     );
-    green_ditherer : OrderedDitherer PORT MAP(
+    green_ditherer : OrderedDitherer port map(
         pixel => pixel.green,
         row => row,
         column => column,
         dithered_pixel => dithered_green_pixel
     );
-    blue_ditherer : OrderedDitherer PORT MAP(
+    blue_ditherer : OrderedDitherer port map(
         pixel => pixel.blue,
         row => row,
         column => column,
@@ -157,17 +157,17 @@ BEGIN
     rgb_output(2) <= dithered_blue_pixel;
 
     rgb <=
-        rgb_output WHEN display_enable = '1' ELSE
+        rgb_output when display_enable = '1' else
         "000";
 
     hsync <= vga_hsync;
     vsync <= vga_vsync;
 
     -- We need 25MHz for the VGA so we divide the input clock by 2
-    PROCESS (clk)
-    BEGIN
-        IF (rising_edge(clk)) THEN
-            vga_clk <= NOT vga_clk;
-        END IF;
-    END PROCESS;
-END ARCHITECTURE;
+    process (clk)
+    begin
+        if (rising_edge(clk)) then
+            vga_clk <= not vga_clk;
+        end if;
+    end process;
+end architecture;

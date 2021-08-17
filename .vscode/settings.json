@@ -1,5 +1,6 @@
 {
   "editor.fontLigatures": false,
   "cSpell.enableFiletypes": ["vhdl"],
-  "cSpell.words": ["DOWNTO"]
+  "cSpell.words": ["DOWNTO"],
+  "vhdl.formatter.case.keyword": "LowerCase"
 }

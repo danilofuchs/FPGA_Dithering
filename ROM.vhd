@@ -30,34 +30,34 @@
 --Intel and sold by Intel or its authorized distributors.  Please
 --refer to the applicable agreement for further details, at
 --https://fpgasoftware.intel.com/eula.
-LIBRARY ieee;
-USE ieee.std_logic_1164.ALL;
+library ieee;
+use ieee.std_logic_1164.all;
 
-LIBRARY altera_mf;
-USE altera_mf.altera_mf_components.ALL;
+library altera_mf;
+use altera_mf.altera_mf_components.all;
 
-ENTITY ROM IS
-	GENERIC (
+entity ROM is
+	generic (
 		init_file : STRING;
 		data_width : INTEGER;
 		address_width : INTEGER;
 		memory_size : INTEGER
 	);
-	PORT (
-		address : IN STD_LOGIC_VECTOR (address_width - 1 DOWNTO 0);
-		clock : IN STD_LOGIC := '1';
-		q : OUT STD_LOGIC_VECTOR (data_width - 1 DOWNTO 0)
+	port (
+		address : in STD_LOGIC_VECTOR (address_width - 1 downto 0);
+		clock : in STD_LOGIC := '1';
+		q : out STD_LOGIC_VECTOR (data_width - 1 downto 0)
 	);
-END ROM;
-ARCHITECTURE rtl OF ROM IS
+end ROM;
+architecture rtl of ROM is
 
-	SIGNAL sub_wire0 : STD_LOGIC_VECTOR (data_width - 1 DOWNTO 0);
+	signal sub_wire0 : STD_LOGIC_VECTOR (data_width - 1 downto 0);
 
-BEGIN
-	q <= sub_wire0(data_width - 1 DOWNTO 0);
+begin
+	q <= sub_wire0(data_width - 1 downto 0);
 
 	altsyncram_component : altsyncram
-	GENERIC MAP(
+	generic map(
 		address_aclr_a => "NONE",
 		clock_enable_input_a => "BYPASS",
 		clock_enable_output_a => "BYPASS",
@@ -73,13 +73,13 @@ BEGIN
 		width_a => data_width,
 		width_byteena_a => 1
 	)
-	PORT MAP(
+	port map(
 		address_a => address,
 		clock0 => clock,
 		q_a => sub_wire0
 	);
 
-END rtl;
+end rtl;
 
 -- ============================================================
 -- CNX file retrieval info
