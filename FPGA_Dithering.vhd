@@ -41,10 +41,16 @@ ARCHITECTURE rtl OF FPGA_Dithering IS
     SIGNAL q : STD_LOGIC_VECTOR(7 DOWNTO 0);
 
     COMPONENT ROM
+        GENERIC (
+            init_file : STRING;
+            data_width : INTEGER;
+            address_width : INTEGER;
+            memory_size : INTEGER
+        );
         PORT (
-            address : IN STD_LOGIC_VECTOR (16 DOWNTO 0);
+            address : IN STD_LOGIC_VECTOR (address_width - 1 DOWNTO 0);
             clock : IN STD_LOGIC := '1';
-            q : OUT STD_LOGIC_VECTOR (7 DOWNTO 0)
+            q : OUT STD_LOGIC_VECTOR (data_width - 1 DOWNTO 0)
         );
     END COMPONENT;
 
@@ -104,6 +110,12 @@ ARCHITECTURE rtl OF FPGA_Dithering IS
     END COMPONENT;
 BEGIN
     lena_rom : ROM
+    GENERIC MAP(
+        init_file => "./images/lena.mif",
+        data_width => 8,
+        address_width => 17,
+        memory_size => 126000
+    )
     PORT MAP(
         clock => clk,
         address => "00000000000000000",

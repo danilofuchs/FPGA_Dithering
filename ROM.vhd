@@ -38,20 +38,23 @@ USE altera_mf.altera_mf_components.ALL;
 
 ENTITY ROM IS
 	GENERIC (
-		init_file : STRING := "./images/lena.mif"
+		init_file : STRING;
+		data_width : INTEGER;
+		address_width : INTEGER;
+		memory_size : INTEGER
 	);
 	PORT (
-		address : IN STD_LOGIC_VECTOR (16 DOWNTO 0);
+		address : IN STD_LOGIC_VECTOR (address_width - 1 DOWNTO 0);
 		clock : IN STD_LOGIC := '1';
-		q : OUT STD_LOGIC_VECTOR (7 DOWNTO 0)
+		q : OUT STD_LOGIC_VECTOR (data_width - 1 DOWNTO 0)
 	);
 END ROM;
 ARCHITECTURE rtl OF ROM IS
 
-	SIGNAL sub_wire0 : STD_LOGIC_VECTOR (7 DOWNTO 0);
+	SIGNAL sub_wire0 : STD_LOGIC_VECTOR (data_width - 1 DOWNTO 0);
 
 BEGIN
-	q <= sub_wire0(7 DOWNTO 0);
+	q <= sub_wire0(data_width - 1 DOWNTO 0);
 
 	altsyncram_component : altsyncram
 	GENERIC MAP(
@@ -62,12 +65,12 @@ BEGIN
 		intended_device_family => "Cyclone IV E",
 		lpm_hint => "ENABLE_RUNTIME_MOD=NO",
 		lpm_type => "altsyncram",
-		numwords_a => 126000,
+		numwords_a => memory_size,
 		operation_mode => "ROM",
 		outdata_aclr_a => "NONE",
 		outdata_reg_a => "CLOCK0",
-		widthad_a => 17,
-		width_a => 8,
+		widthad_a => address_width,
+		width_a => data_width,
 		width_byteena_a => 1
 	)
 	PORT MAP(
