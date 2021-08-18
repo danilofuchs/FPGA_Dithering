@@ -36,7 +36,8 @@ architecture rtl of FPGA_Dithering is
             image_width : in INTEGER;
             image_height : in INTEGER;
             memory_size : INTEGER;
-            address_width : INTEGER
+            address_width : INTEGER;
+            data_width : INTEGER
         );
         port (
             clk : in STD_LOGIC;
@@ -87,13 +88,14 @@ architecture rtl of FPGA_Dithering is
         );
     end component;
 begin
-    lena_rom : ImageLoader
+    img_gray : ImageLoader
     generic map(
-        init_file => "./images/lena.mif",
-        image_width => 100,
-        image_height => 140,
-        memory_size => 14000,
-        address_width => 14
+        init_file => "./images/jardim_botanico_gray.mif",
+        image_width => 149,
+        image_height => 100,
+        memory_size => 14900,
+        address_width => 14,
+        data_width => 8
     )
     port map(
         clk => clk,
@@ -101,6 +103,22 @@ begin
         row => row,
         pixel => pixel
     );
+
+    -- img_color : ImageLoader
+    -- generic map(
+    --     init_file => "./images/jardim_botanico.mif",
+    --     image_width => 72,
+    --     image_height => 100,
+    --     memory_size => 7200,
+    --     address_width => 14,
+    --     data_width => 24
+    -- )
+    -- port map(
+    --     clk => clk,
+    --     column => column,
+    --     row => row,
+    --     pixel => pixel
+    -- );
 
     vga_controller : VgaController generic map(
         h_pulse => H_SYNC_PULSE,
