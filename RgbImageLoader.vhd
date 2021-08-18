@@ -8,7 +8,7 @@ library std;
 
 use work.Pixel.all;
 
-entity ImageLoader is
+entity RgbImageLoader is
     generic (
         init_file : STRING;
         image_width : INTEGER;
@@ -22,9 +22,9 @@ entity ImageLoader is
         row : in INTEGER;
         pixel : out pixel_type
     );
-end entity ImageLoader;
+end entity RgbImageLoader;
 
-architecture rtl of ImageLoader is
+architecture rtl of RgbImageLoader is
     component ROM
         generic (
             init_file : STRING;
@@ -35,13 +35,13 @@ architecture rtl of ImageLoader is
         port (
             address : in STD_LOGIC_VECTOR (address_width - 1 downto 0);
             clock : in STD_LOGIC := '1';
-            q : out STD_LOGIC_VECTOR (data_width - 1 downto 0)
+            q : out STD_LOGIC_VECTOR (23 downto 0)
         );
     end component;
 
     signal pixel_index : INTEGER;
     signal pixel_address : STD_LOGIC_VECTOR(address_width - 1 downto 0);
-    signal pixel_data : STD_LOGIC_VECTOR(7 downto 0);
+    signal pixel_data : STD_LOGIC_VECTOR(23 downto 0);
 
     signal should_draw : BOOLEAN;
 
@@ -49,7 +49,7 @@ begin
     image : ROM
     generic map(
         init_file => init_file,
-        data_width => 8,
+        data_width => 24,
         address_width => address_width,
         memory_size => memory_size
     )
@@ -66,11 +66,11 @@ begin
     should_draw <= (column <= image_width and row <= image_height and pixel_index <= memory_size);
 
     pixel.red <=
-    pixel_data(7 downto 0) when (should_draw) else
+    pixel_data(23 downto 16) when (should_draw) else
     "00000000";
 
     pixel.green <=
-    pixel_data(7 downto 0) when (should_draw) else
+    pixel_data(15 downto 8) when (should_draw) else
     "00000000";
 
     pixel.blue <=
