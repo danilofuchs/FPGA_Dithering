@@ -2,7 +2,7 @@
 % containing the image in grayscale.
 
 write_mif('jardim_botanico.jpg', 'jardim_botanico_gray.mif', [100 NaN], true);
-%write_mif('jardim_botanico.jpg', 'jardim_botanico.mif', [80 NaN], false);
+write_mif('jardim_botanico.jpg', 'jardim_botanico.mif', [60 NaN], false);
 
 function write_mif(filename, out_filename, target_size, is_grayscale)
 
@@ -31,18 +31,11 @@ function write_mif(filename, out_filename, target_size, is_grayscale)
     end
 
     % Size of picture
-    [height, width] = size(resized);
+    [height, width, ~] = size(resized);
 
-    if (is_grayscale)
-        % Convert to 1xN vector
-        data = reshape(resized, 1, width * height);
-    else
-        size(resized)
-        % Convert to 1xN vector with RGB values
-        data = reshape(resized, 1, width * height, 3);
-    end
+    data = resized;
 
-    depth = length(data);
+    depth = height * width;
     word_length = pixel_depth;
 
     fid = fopen(strcat(path, out_filename), 'w');
@@ -54,16 +47,23 @@ function write_mif(filename, out_filename, target_size, is_grayscale)
     fprintf(fid, 'CONTENT\t');
     fprintf(fid, 'BEGIN\n');
 
-    for i = 0:length(data) - 1
+    for col = 1:width
 
-        if (is_grayscale)
-            output = sprintf('%x', data(i + 1));
-        else
-            [r, g, b] = data(i + 1);
-            output = sprintf('%x%x%x', r, g, b);
+        for row = 1:height
+
+            if (is_grayscale)
+                hex = sprintf('%02x', data(row, col));
+            else
+                r = data(row, col, 1);
+                g = data(row, col, 2);
+                b = data(row, col, 3);
+                hex = sprintf('%02x%02x%02x', r, g, b);
+            end
+
+            index = (row - 1) + (col - 1) * height;
+            fprintf(fid, '\t%d\t:\t%s;\n', index, hex);
         end
 
-        fprintf(fid, '\t%d\t:\t%s;\n', i, output);
     end
 
     fprintf(fid, 'END;\n');
