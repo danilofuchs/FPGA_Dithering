@@ -1,17 +1,16 @@
 % Creates a .mif file from an image,
 % containing the image in grayscale.
 
-write_mif('jardim_botanico.jpg', 'jardim_botanico_gray.mif', [100 NaN], true);
-write_mif('jardim_botanico.jpg', 'jardim_botanico.mif', [60 NaN], false);
+write_mif('jardim_botanico.jpg', 'jardim_botanico_gray.mif', true);
+write_mif('jardim_botanico.jpg', 'jardim_botanico.mif', false);
 
-function write_mif(filename, out_filename, target_size, is_grayscale)
+function write_mif(filename, out_filename, is_grayscale)
 
     if (strcmp(filename, out_filename) == 1)
         error('Output file must be different from input file.');
     end
 
     path = '../images/';
-    maximum_bits = 276480; % Maximum memory size on the FPGA board
 
     pixel_depth = 24; % Full color
 
@@ -22,24 +21,20 @@ function write_mif(filename, out_filename, target_size, is_grayscale)
         img = im2gray(img);
     end
 
-    resized = imresize(img, target_size);
+    resized = resize_to_fit_memory(img, pixel_depth, [200, NaN]);
 
-    required_bits = size(resized, 1) * size(resized, 2) * pixel_depth;
-
-    if (required_bits > maximum_bits)
-        error('Target image size too large for FPGA memory (%d bits, maximum %d bits)', required_bits, maximum_bits);
-    end
-
-    % Size of picture
     [height, width, ~] = size(resized);
+
+    required_bits = get_required_bits(resized, pixel_depth);
+    maximum_bits = get_maximum_bits();
 
     data = resized;
 
-    depth = height * width;
+    memory_size = height * width;
     word_length = pixel_depth;
 
     fid = fopen(strcat(path, out_filename), 'w');
-    fprintf(fid, 'DEPTH=%d;\n', depth);
+    fprintf(fid, 'DEPTH=%d;\n', memory_size);
     fprintf(fid, 'WIDTH=%d;\n', word_length);
 
     fprintf(fid, 'ADDRESS_RADIX = UNS;\n');
@@ -69,5 +64,36 @@ function write_mif(filename, out_filename, target_size, is_grayscale)
     fprintf(fid, 'END;\n');
     fclose(fid);
 
-    fprintf('[%s] Height: %d, Width: %d, Depth: %d, Pixel depth: %db. Using %d bits\n', out_filename, height, width, depth, pixel_depth, required_bits);
+    address_width = ceil(log2(memory_size));
+    fprintf('[%s]\n\tHeight: %d\n\tWidth: %d\n\tMemory size: %d\n\tPixel depth: %db\n\tAddress Width: %d\n\tRAM usage: %d bits (%.2f%%)\n\n', out_filename, height, width, memory_size, pixel_depth, address_width, required_bits, required_bits / maximum_bits * 100);
+end
+
+function result = resize_to_fit_memory(img, pixel_depth, target_size)
+
+    if (target_size(1) == 0)
+        error('Could not fit image inside contraints')
+    end
+
+    resized = imresize(img, target_size);
+
+    required_bits = get_required_bits(resized, pixel_depth);
+    % Adds some margin as the FPGA memory needs to be arranged differently
+    maximum_bits = get_maximum_bits() * 0.8;
+
+    if (required_bits > maximum_bits)
+        result = resize_to_fit_memory(img, pixel_depth, [target_size(1) - 1, NaN]);
+    else
+        result = resized;
+    end
+
+end
+
+% Maximum memory size on the FPGA board, with some margin.
+function bits = get_maximum_bits()
+    bits = 276480;
+
+end
+
+function bits = get_required_bits(img, pixel_depth)
+    bits = size(img, 1) * size(img, 2) * pixel_depth;
 end

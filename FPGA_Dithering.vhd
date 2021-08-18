@@ -106,10 +106,10 @@ begin
     -- img_gray : ImageLoader
     -- generic map(
     --     init_file => "./images/jardim_botanico_gray.mif",
-    --     image_width => 149,
-    --     image_height => 100,
-    --     memory_size => 14900,
-    --     address_width => 14
+    --     image_height => 136,
+    --     image_width => 202,
+    --     memory_size => 27472,
+    --     address_width => 15
     -- )
     -- port map(
     --     clk => clk,
@@ -121,9 +121,9 @@ begin
     img_color : RgbImageLoader
     generic map(
         init_file => "./images/jardim_botanico.mif",
-        image_width => 90,
-        image_height => 60,
-        memory_size => 5400,
+        image_height => 78,
+        image_width => 116,
+        memory_size => 9048,
         address_width => 14
     )
     port map(
