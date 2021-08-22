@@ -1,10 +1,10 @@
-% Creates a .mif file from an image,
-% containing the image in grayscale.
+% Creates a .mif file from an image, resized to fit inside the memory limits of the board.
+% Each address contains a pixel, either 8bit (grayscale) or 24bit (RGB)
 
-write_mif('jardim_botanico.jpg', 'jardim_botanico_gray.mif', true);
-write_mif('jardim_botanico.jpg', 'jardim_botanico.mif', false);
+write_mif('jardim_botanico.jpg', 'jardim_botanico_gray.mif', false);
+write_mif('jardim_botanico.jpg', 'jardim_botanico.mif', true);
 
-function write_mif(filename, out_filename, is_grayscale)
+function write_mif(filename, out_filename, is_rgb)
     fprintf('[%s]\n', out_filename);
 
     if (strcmp(filename, out_filename) == 1)
@@ -16,6 +16,8 @@ function write_mif(filename, out_filename, is_grayscale)
     pixel_depth = 24; % Full color
 
     img = imread(strcat(path, filename));
+
+    is_grayscale = ~is_rgb;
 
     if (is_grayscale)
         pixel_depth = 8; % Grayscale
@@ -47,13 +49,13 @@ function write_mif(filename, out_filename, is_grayscale)
 
         for row = 1:height
 
-            if (is_grayscale)
-                hex = sprintf('%02x', data(row, col));
-            else
+            if (is_rgb)
                 r = data(row, col, 1);
                 g = data(row, col, 2);
                 b = data(row, col, 3);
                 hex = sprintf('%02x%02x%02x', r, g, b);
+            else
+                hex = sprintf('%02x', data(row, col));
             end
 
             index = (row - 1) + (col - 1) * height;
@@ -93,10 +95,9 @@ function result = resize_to_fit_memory(img, pixel_depth, target_size)
 
 end
 
-% Maximum memory size on the FPGA board, with some margin.
+% Maximum memory size on the FPGA board
 function bits = get_maximum_bits()
     bits = 276480;
-
 end
 
 function bits = get_required_bits(img, pixel_depth)
