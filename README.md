@@ -10,6 +10,8 @@ algorithm for Cyclone IV FPGA.
 
 > Photos taken from my cellphone camera, pointed at a LCD screen with VGA input
 
+> These are low resolution as the board has severe memory limitations and this showcases the actual image size on the output display. Thus, grayscale images are larger as they require less bits per pixel.
+
 - ✔️ 2x2 Bayer Dithering
 - ✔️ 8-bit grayscale dithering to 1-bit BW
 - ✔️ 24-bit RGB dithering to 3-bit RGB
