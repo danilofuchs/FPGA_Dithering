@@ -19,7 +19,7 @@ algorithm for Cyclone IV FPGA.
 Built for _RZ-EasyFPGA A2.2_, a simple board built with the **Altera Cyclone IV EP4CE6E22C8N**
 chip, easily found on AliExpress for cheap. The datasheet is non-existent, and the pinage is in the [docs folder](./docs/RZ-EasyFPGA.jpg).
 
-![Board picture](./docs/board.png)
+<img src="./docs/board.png" height="300"/>
 
 Although it suits most hobbyist needs, this board is pretty limited.
 
@@ -30,24 +30,37 @@ is not possible to display a full 24-bit pixel to a display without a daughter b
 
 This project was inspired by 2 awesome videos:
 
-[![](./docs/dithering_http203.png)](https://www.youtube.com/watch?v=wS0Gck00nDw)
+[<img src="./docs/dithering_http203.png" height="300"/>](https://www.youtube.com/watch?v=wS0Gck00nDw)
 
 > [HTTP 203 - Dithering](https://www.youtube.com/watch?v=wS0Gck00nDw)
 
 I really recommend watching this video to understand the algorithm:
 
-[![](./docs/dithering_computerphile.png)](https://www.youtube.com/watch?v=IviNO7iICTM&ab_channel=Computerphile)
+[<img src="./docs/dithering_computerphile.png" height="300"/>](https://www.youtube.com/watch?v=IviNO7iICTM&ab_channel=Computerphile)
 
 > [Computerphile - Ordered Dithering](https://www.youtube.com/watch?v=IviNO7iICTM&ab_channel=Computerphile)
 
 ## Dithering
 
-The naïve approach to convert an 8-bit channel to 1-bit would be to simply round
-the pixels to their nearest value (1 or 0). However, this limits ourselves to just
-basic colors and tends to saturate colors too much, it does not look good on the eyes.
+Our objective is to take a 8-bit grayscale image and convert it to a 1-bit BW image.
+This is very common in ink-jet printers, e-readers, low quality GIFs, etc. as they
+have a very limited set of colors to use.
+
+The naive approach would be to simply round the pixels to their nearest value
+(255 or 0), using the middle point as a threshold (127). However, this tends to
+remove details in the image and it does not look very good on the human eyes.
 (check the initial table)
 
-Dithering performs some clever mathematics so it looks OK to the human eye.
+For 24-bit RGB images, we could apply this naive approach on each channel
+individually, but the end result tends to saturate colors too much, as it is
+limited to blue, green and red and combinations of these.
+
+A simple way to improve that is by moving the threshold to the average of all pixels
+in the image. But that is still not enough.
+
+Dithering performs some clever mathematics to _simulate_ intermediate colors, by
+mixing the threshold in which we decide if a pixel should be lit or dark. Ordered
+Dithering is very simple and can be done in a single pass, and even be parallelized.
 
 ### Ordered Dithering (Bayer 2x2 method)
 
@@ -68,6 +81,16 @@ matrix entry, the pixel is dithered to white; otherwise it is dithered to black.
 
 For colored images, we simply apply this process on each channel
 individually and combine them in the end.
+
+## Implementation
+
+For each VGA clock, we count up the row and column indexes of the target display.
+For each coordinate, we load the original image value for that pixel, apply
+dithering to it and output it to the display.
+
+This is very simple and does not use the FPGA parallel computing capabilities, as
+it is simply not required as the computation can easily be done inside a VGA clock
+cycle.
 
 ## Initial setup
 
