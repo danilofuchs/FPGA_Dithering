@@ -66,7 +66,7 @@ begin
     should_draw <= (column <= image_width and row <= image_height and pixel_index <= memory_size);
 
     pixel.red <=
-    pixel_data(23 downto 16) when (should_draw) else
+    pixel_data(7 downto 0) when (should_draw) else
     "00000000";
 
     pixel.green <=
@@ -74,7 +74,7 @@ begin
     "00000000";
 
     pixel.blue <=
-    pixel_data(7 downto 0) when (should_draw) else
+    pixel_data(23 downto 16) when (should_draw) else
     "00000000";
 
 end architecture;
