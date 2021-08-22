@@ -11,8 +11,7 @@ entity FPGA_Dithering is
         clk : in STD_LOGIC; -- Pin 23, 50MHz from the onboard oscillator.
         rgb : out STD_LOGIC_VECTOR (2 downto 0); -- Pins 106, 105 and 104
         hsync : out STD_LOGIC; -- Pin 101
-        vsync : out STD_LOGIC; -- Pin 103
-        led : out STD_LOGIC_VECTOR(3 downto 0) -- Pin 87, 86, 85, 84
+        vsync : out STD_LOGIC -- Pin 103
     );
 end entity FPGA_Dithering;
 
@@ -27,8 +26,6 @@ architecture rtl of FPGA_Dithering is
     signal column, row : INTEGER;
 
     signal pixel : pixel_type;
-
-    signal q : STD_LOGIC_VECTOR(7 downto 0);
 
     component ImageLoader is
         generic (
