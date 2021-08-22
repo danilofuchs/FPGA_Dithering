@@ -5,6 +5,7 @@ write_mif('jardim_botanico.jpg', 'jardim_botanico_gray.mif', true);
 write_mif('jardim_botanico.jpg', 'jardim_botanico.mif', false);
 
 function write_mif(filename, out_filename, is_grayscale)
+    fprintf('[%s]\n', out_filename);
 
     if (strcmp(filename, out_filename) == 1)
         error('Output file must be different from input file.');
@@ -66,6 +67,10 @@ function write_mif(filename, out_filename, is_grayscale)
 
     address_width = ceil(log2(memory_size));
     fprintf('[%s]\n\tHeight: %d\n\tWidth: %d\n\tMemory size: %d\n\tPixel depth: %db\n\tAddress Width: %d\n\tRAM usage: %d bits (%.2f%%)\n\n', out_filename, height, width, memory_size, pixel_depth, address_width, required_bits, required_bits / maximum_bits * 100);
+
+    [~, ~, in_extension] = fileparts(filename);
+    [~, out_name, ~] = fileparts(out_filename);
+    imwrite(resized, strcat(path, out_name, '_resized', in_extension));
 end
 
 function result = resize_to_fit_memory(img, pixel_depth, target_size)
