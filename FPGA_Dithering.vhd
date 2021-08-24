@@ -59,13 +59,6 @@ architecture rtl of FPGA_Dithering is
         );
     end component;
 
-    component SevenSegmentsDecoder is
-        port (
-            input : in STD_LOGIC_VECTOR (3 downto 0);
-            output : out STD_LOGIC_VECTOR (6 downto 0)
-        );
-    end component;
-
     component VgaController is
         generic (
             h_pulse : INTEGER := 208; --horizontal sync pulse width in pixels

@@ -3,15 +3,6 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 package VgaUtils is
-  constant COLOR_WHITE : STD_LOGIC_VECTOR := "111";
-  constant COLOR_YELLOW : STD_LOGIC_VECTOR := "110";
-  constant COLOR_PURPLE : STD_LOGIC_VECTOR := "101";
-  constant COLOR_RED : STD_LOGIC_VECTOR := "100";
-  constant COLOR_WATER : STD_LOGIC_VECTOR := "011";
-  constant COLOR_GREEN : STD_LOGIC_VECTOR := "010";
-  constant COLOR_BLUE : STD_LOGIC_VECTOR := "001";
-  constant COLOR_BLACK : STD_LOGIC_VECTOR := "000";
-
   -- Timing values for 640x480@60Hz resolution
   -- http://tinyvga.com/vga-timing/640x480@60Hz
   constant H_SYNC_PULSE : INTEGER := 96;
