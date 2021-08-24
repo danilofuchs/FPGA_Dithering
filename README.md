@@ -94,6 +94,8 @@ This is very simple and does not use the FPGA parallel computing capabilities, a
 it is simply not required as the computation can easily be done inside a VGA clock
 cycle.
 
+![Architecture](./docs/diagrams/architecture.png)
+
 ## Initial setup
 
 This project uses [Intel Quartus Prime **Lite**](https://www.intel.com/content/www/us/en/software/programmable/quartus-prime/download.html) version 20.1 or later.
