@@ -3,6 +3,8 @@
 Implementation of [Ordered Dithering](https://en.wikipedia.org/wiki/Ordered_dithering)
 algorithm for Cyclone IV FPGA.
 
+**See this [Presentation](./presentation.pdf) (in Portuguese) for more details**
+
 | Original image                 | No dithering (rounding pixels)   | Dithering                     |
 | ------------------------------ | -------------------------------- | ----------------------------- |
 | ![](./docs/color_original.jpg) | ![](./docs/color_no_dither.jpeg) | ![](./docs/color_dither.jpeg) |
@@ -90,9 +92,9 @@ For each VGA clock, we count up the row and column indexes of the target display
 For each coordinate, we load the original image value for that pixel, apply
 dithering to it and output it to the display.
 
-This is very simple and does not use the FPGA parallel computing capabilities, as
-it is simply not required as the computation can easily be done inside a VGA clock
-cycle.
+This is very simple and does not actually use the FPGA parallel computing
+capabilities, as they are simply not required as all computations can easily
+be done inside a VGA clock cycle.
 
 ![Architecture](./docs/diagrams/architecture.png)
 
@@ -117,8 +119,7 @@ If you want to display a custom image, you first need to prepare it so the FPGA
 can understand it.
 
 The `scripts/generate_mif_file.m` script takes an input image and resizes it
-to fit inside the FPGA's maximum memory size (34Kb). It also can transform an image
-to grayscale and outputs a `.mif` file to be referenced inside the VHDL code.
+to fit inside the FPGA's maximum memory size (276Kb) and outputs a `.mif` file to be referenced inside the VHDL code. It can also transform the image to grayscale.
 
 > The script does not work on Octave, as it lacks the `imread` function.
 
@@ -156,8 +157,7 @@ The command output will look like this:
 ```
 
 Take this information and place it inside the [FPGA_Dithering.vhd](./FPGA_Dithering.vhd)
-file, commenting or replacing other images (the FPGA only has memory capacity for
-one at a time).
+file, replacing existing images (the FPGA only has memory capacity for one image at a time).
 
 ## VGA displays
 
